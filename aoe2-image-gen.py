@@ -5,12 +5,8 @@ import random
 
 import pyautogui
 
-GAME_PLATFORM = 'steam'
-
 def start_aoe2():
-    if GAME_PLATFORM == 'steam':
-        subprocess.Popen(["bash", "-c", "steam steam://rungameid/221380"])
-    
+    subprocess.Popen(["bash", "-c", "steam steam://rungameid/221380"])
     wait_for_image('images/main-menu/aoe2-main-menu.png')
 
 def open_map_editor():
@@ -25,7 +21,6 @@ def open_map_editor():
 
     wait_for_image('images/map-editor/aoe2-map-editor-main-starting-view.png')
 
-# TODO: Make loop-able
 def generate_random_map():
     try:
         map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-map-button-unclicked.png')
@@ -47,7 +42,6 @@ def generate_random_map():
         pyautogui.typewrite('aaaa\n', interval=0.2)
     except:
         pass
-
 
     generate_map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-generate-map-button.png')
     pyautogui.click(generate_map_button_center)
@@ -81,15 +75,6 @@ def place_villager():
 
     pyautogui.moveRel(yOffset=260)
 
-#def start_scenario():
-#    map_editor_menu_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-menu-button.png')
-#    pyautogui.click(map_editor_menu_button_center)
-#
-#    map_editor_menu_test_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-menu-test-button.png')
-#    pyautogui.click(map_editor_menu_test_button_center)
-#
-#    wait_for_image('images/map-editor/aoe2-status-bar.png')
-
 def take_screenshot(unit_name, n):
     screenshot_center_offset = round(random.uniform(0,180))
     pyautogui.screenshot('result/' + unit_name + '_' + str(n) + '.png', region=(960 - screenshot_center_offset, 540 - screenshot_center_offset, 224, 224))
@@ -97,7 +82,6 @@ def take_screenshot(unit_name, n):
 def wait_for_image(image):
     while pyautogui.locateOnScreen(image) == None:
         time.sleep(0.5)
-
 
 start_aoe2()
 open_map_editor()
@@ -120,7 +104,7 @@ for i in range(0, 2000):
 print('''
 
 
-Ran until finished!
+Ran until the end!
 
 
 ''')
