@@ -3,6 +3,8 @@ import subprocess
 import time
 import random
 
+from aoe2_units import units_dict
+
 import pyautogui
 
 def start_aoe2():
@@ -64,7 +66,6 @@ def place_villager():
     except:
         pass
 
-
     n = round(random.uniform(0,1))
     if n == 0:
         pyautogui.typewrite('v')
@@ -72,34 +73,99 @@ def place_villager():
         pyautogui.typewrite('vv')
 
     pyautogui.click(villager_place)
-
     pyautogui.moveRel(yOffset=260)
 
-def take_screenshot(unit_name, n):
-    screenshot_center_offset = round(random.uniform(0,180))
-    pyautogui.screenshot('result/' + unit_name + '_' + str(n) + '.png', region=(960 - screenshot_center_offset, 540 - screenshot_center_offset, 224, 224))
+def take_screenshot(n):
+    pyautogui.moveRel(xOffset=200, yOffset=200)
+    pyautogui.screenshot('result/' + str(n) + '.png', region=(848, 428, 224, 224))
 
 def wait_for_image(image):
     while pyautogui.locateOnScreen(image) == None:
         time.sleep(0.5)
 
-start_aoe2()
-open_map_editor()
+def goto_units_screen():
+    units_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-units-button.png')
+    pyautogui.click(units_button_center)
 
-num_villagers = 0
-num_no_villagers = 0
+def place_unit(unit, location):
+    pyautogui.typewrite(units_dict[unit]['place_command'], interval=0.15)
+    pyautogui.click(location)
 
-for i in range(0, 2000):
-    generate_random_map()
-    
-    n = round(random.uniform(0,1))
-    if n == 0:
-        num_villagers += 1
-        place_villager()
-        take_screenshot('villager', num_villagers) 
-    else:
-        num_no_villagers += 1
-        take_screenshot('no-villager', num_no_villagers)
+def point_is_near_other_locations(location, list_of_locations):
+    if not list_of_locations:
+        return False
+
+    for i in range(len(list_of_locations) - 1):
+        if abs(list_of_locations[i].x - location.x) < 40:
+            return True
+        elif abs(list_of_locations[i].y - location.y) < 40:
+            return True
+    return False
+
+def generate_random_point():
+    random_x = random.uniform(0, 224) + 848
+    random_y = random.uniform(0, 224) + 428
+    return pyautogui.Point(random_x, random_y)
+
+
+csv_filename = 'labels.csv'
+with open(csv_filename, 'a') as csv_file:
+    csv_file.write("file, labels\n")
+
+for i in range(3):
+    time.sleep(3)
+    labels = []
+    already_used_locations = []
+    number_of_units = round(random.uniform(1, 5))
+
+    print('placing ' + str(number_of_units) + ' units')
+    for j in range(number_of_units):
+        random_unit_int = round(random.uniform(0, len(units_dict) - 1))
+        unit = list(units_dict.keys())[random_unit_int]
+        print('placing unit: ' + unit)
+
+        location = generate_random_point()
+        while point_is_near_other_locations(location, already_used_locations):
+            location = generate_random_point() 
+            print('new location is: ' + str(location))
+        already_used_locations.append(location)
+
+        place_unit(unit, location)
+        if unit not in labels:
+            labels.append(unit)
+
+    pyautogui.moveRel(xOffset=200)
+
+    with open(csv_filename, 'a') as csv_file:
+        csv_file.write(str(i) + ', ' + " ".join(labels) + "\n")
+    #take_screenshot(i)
+    #write_labels()
+    print('labels is: ' + " ".join(labels))
+    print('already_used_locations is: ' + str(already_used_locations))
+    print('''
+        
+    ''')
+
+
+
+
+#start_aoe2()
+#open_map_editor()
+#
+#num_villagers = 0
+#num_no_villagers = 0
+#
+#for i in range(0, 2000):
+#    generate_random_map()
+#    
+#    n = round(random.uniform(0,1))
+#    if n == 0:
+#        num_villagers += 1
+#        place_villager()
+#        take_screenshot('villager', num_villagers) 
+#    else:
+#        num_no_villagers += 1
+#        take_screenshot('no-villager', num_no_villagers)
 
 print('''
 
