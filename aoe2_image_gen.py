@@ -4,10 +4,10 @@ import time
 import random
 import traceback
 import sys
+import os
+import pyautogui
 
 from aoe2_units import units_dict, terrain_dict
-
-import pyautogui
 
 def start_aoe2():
     subprocess.Popen(["bash", "-c", "steam steam://rungameid/221380"])
@@ -45,7 +45,6 @@ def generate_random_map():
 def take_screenshot(n):
     pyautogui.moveRel(xOffset=200, yOffset=200)
     pyautogui.screenshot('result/train/' + str(n) + '.png', region=(848, 428, 224, 224))
-    #pyautogui.screenshot('result/train/' + str(n) + '_debug.png', region=(780, 370, 350, 350))
 
 def wait_for_image(image):
     while pyautogui.locateOnScreen(image) == None:
@@ -79,19 +78,21 @@ def generate_random_point():
 time.sleep(3)
 
 csv_filename = 'result/labels.csv'
-with open(csv_filename, 'a') as csv_file:
-    csv_file.write("image_name, tags\n")
 
-##start_aoe2()
-##open_map_editor()
+if os.stat(csv_filename).st_size == 0:
+    with open(csv_filename, 'a') as csv_file:
+        csv_file.write("image_name, tags\n")
 
-for i in range(2000):
+start_aoe2()
+open_map_editor()
+
+for i in range(0, 30000):
     generate_random_map()
     open_unit_editor()
 
     labels = []
     already_used_locations = []
-    number_of_units = round(random.uniform(3,6))
+    number_of_units = round(random.uniform(1,6))
 
     print('placing ' + str(number_of_units) + ' units')
     for j in range(number_of_units):
@@ -113,15 +114,15 @@ for i in range(2000):
             if unit not in labels:
                 labels.append(unit)
         except:
+            print("Skipping...")
             pass
-
-    pyautogui.moveRel(xOffset=200)
 
     with open(csv_filename, 'a') as csv_file:
         csv_file.write(str(i) + ', ' + " ".join(labels) + "\n")
-    take_screenshot(i)
 
-    time.sleep(3)
+    # Move mouse out of the way of the screenshot
+    pyautogui.moveRel(xOffset=200)
+    take_screenshot(i)
 
     print('labels is: ' + " ".join(labels))
     print('already_used_locations is: ' + str(already_used_locations))
