@@ -3,34 +3,59 @@ import subprocess
 import time
 import random
 import traceback
+import pyautogui
 import sys
 import os
-import pyautogui
+import json
+import Xlib
+import argparse
 
 from aoe2_units import units_dict, terrain_dict
 
-def start_aoe2():
-    subprocess.Popen(["bash", "-c", "steam steam://rungameid/221380"])
-    wait_for_image('images/main-menu/aoe2-main-menu.png')
+from easyprocess import EasyProcess
+from pyvirtualdisplay.smartdisplay import SmartDisplay
+from pyvirtualdisplay import Display
+
+VISIBLE=False
+
+res_x=1024
+res_y=768
+
+def run_map_editor():
+    pass
+
+def run_version():
+    raise NotImplementedError()
+    
+def steam_login():
+    steam_password = os.environ['STEAM_PASSWORD'] 
+
+    wait_for_image('images/steam/steam-login-screen.png')
+
+    steam_password_box_center = pyautogui.locateCenterOnScreen('images/steam/steam-password-box.png')
+    pyautogui.click(steam_password_box_center)
+    pyautogui.typewrite(steam_password + '\n')
 
 def open_map_editor():
     map_editor_location_center = pyautogui.locateCenterOnScreen('images/main-menu/aoe2-map-editor-button.png')
     pyautogui.click(map_editor_location_center)
 
-    create_scenario_button_center = pyautogui.locateCenterOnScreen('images/main-menu/aoe2-main-menu-create-scenario-button.png')
+    create_scenario_button_center = pyautogui.locateCenterOnScreen('images/main-menu/aoe2-create-scenario-button.png')
     pyautogui.click(create_scenario_button_center)
 
-    create_button_center = pyautogui.locateCenterOnScreen('images/main-menu/aoe2-main-menu-create-button.png')
+    create_button_center = pyautogui.locateCenterOnScreen('images/main-menu/aoe2-create-button.png')
     pyautogui.click(create_button_center)
 
     wait_for_image('images/map-editor/aoe2-map-editor-main-starting-view.png')
 
 def generate_random_map():
-    try:
-        map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-map-button-unclicked.png')
-        pyautogui.click(map_button_center)
-    except:
-        pass
+    #try:
+    #    map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-map-button-unclicked.png')
+    #    pyautogui.click(map_button_center)
+    #except:
+    #    print("Couldn't find the map editor button")
+
+    pyautogui.click(x=25, y=18)
 
     default_terrain_dropdown= pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-default-terrain-text.png')
     default_terrain_dropdown_clickable = pyautogui.Point(default_terrain_dropdown.x + 195, default_terrain_dropdown.y + 20)
@@ -39,16 +64,21 @@ def generate_random_map():
     terrain_index = round(random.uniform(0,len(terrain_dict)) - 1)
     pyautogui.typewrite(list(terrain_dict[terrain_index].values())[0], interval=0.2)
 
-    generate_map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-generate-map-button.png')
+    generate_map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-generate-map-button.png')
     pyautogui.click(generate_map_button_center)
 
 def take_screenshot(n):
-    pyautogui.moveRel(xOffset=200, yOffset=200)
-    pyautogui.screenshot('result/train/' + str(n) + '.png', region=(848, 428, 224, 224))
+    pyautogui.screenshot('results/train/' + str(n) + '.png', region=(400, 272, 224, 224))
 
-def wait_for_image(image):
+def wait_for_image(image, timeout=30):
+    seconds_waited = 0
+    wait_time = 0.5
     while pyautogui.locateOnScreen(image) == None:
-        time.sleep(0.5)
+        time.sleep(wait_time)
+        seconds_waited += wait_time
+        if seconds_waited > timeout:
+            raise TimeoutError('wait_for_image timeout expired')
+    time.sleep(0.01)
 
 def open_unit_editor():
     try:
@@ -71,69 +101,80 @@ def point_is_near_other_locations(location, list_of_locations):
     return False
 
 def generate_random_point():
-    random_x = random.uniform(0, 144) + 898 
-    random_y = random.uniform(0, 144) + 488
+    random_x = random.uniform(12, 140) + 400 
+    random_y = random.uniform(60, 200) + 272
     return pyautogui.Point(random_x, random_y)
 
-time.sleep(3)
+def generate_villager_dataset(numberOfImages):
+    print(numberOfImages)
+    if VISIBLE:
+        print("Visible!")
+    raise NotImplementedError()
 
-csv_filename = 'result/labels.csv'
+def generate_multi_label_dataset(numberOfImages, csv_filename='results/labels.csv'):
+    with Display(visible=1 if VISIBLE else 0, size=(res_x,res_y)) as disp:
+        pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ['DISPLAY'])
+        with EasyProcess('bash -c "steam steam://rungameid/221380"'):
 
-if os.stat(csv_filename).st_size == 0:
-    with open(csv_filename, 'a') as csv_file:
-        csv_file.write("image_name, tags\n")
+            if not os.path.exists(csv_filename):
+                with open(csv_filename, 'w+') as f:
+                    f.write('image_name, tags\n')
 
-start_aoe2()
-open_map_editor()
+            if not os.path.exists('./results/train'):
+                os.mkdir('./results/train')
 
-for i in range(0, 30000):
-    generate_random_map()
-    open_unit_editor()
+            wait_for_image('images/main-menu/aoe2-main-menu.png')
 
-    labels = []
-    already_used_locations = []
-    number_of_units = round(random.uniform(1,6))
+            open_map_editor()
+    
+            for i in range(0, numberOfImages):
+                generate_random_map()
+                open_unit_editor()
+    
+                labels = []
+                already_used_locations = []
+                number_of_units = round(random.uniform(1,6))
+    
+                for j in range(number_of_units):
+                    try:
+                        random_unit_int = round(random.uniform(0, len(units_dict)) - 1)
+                        unit = list(units_dict.keys())[random_unit_int]
+    
+                        location_tries = 0
+                        location = generate_random_point()
+                        while point_is_near_other_locations(location, already_used_locations):
+                            location = generate_random_point()
+                            location_tries += 1
+                            if location_tries > 10:
+                                raise Exception('tried generating a random position too many times, giving up!')
+                        already_used_locations.append(location)
+    
+                        place_unit(unit, location)
+                        if unit not in labels:
+                            labels.append(unit)
+                    except:
+                        pass
+                    
+                with open(csv_filename, 'a') as csv_file:
+                    csv_file.write(str(i) + ', ' + " ".join(labels) + "\n")
+    
+                # Move mouse out of the way of the screenshot
+                pyautogui.moveRel(xOffset=224)
+                take_screenshot(i)
 
-    print('placing ' + str(number_of_units) + ' units')
-    for j in range(number_of_units):
-        try:
-            random_unit_int = round(random.uniform(0, len(units_dict)) - 1)
-            unit = list(units_dict.keys())[random_unit_int]
-            print('placing unit: ' + unit)
+FUNCTION_MAP = {'version' : run_version,
+                'map_editor' : run_map_editor,
+                'villagers' : generate_villager_dataset,
+                'multi_label' : generate_multi_label_dataset }
 
-            location_tries = 0
-            location = generate_random_point()
-            while point_is_near_other_locations(location, already_used_locations):
-                location = generate_random_point()
-                location_tries += 1
-                if location_tries > 10:
-                    raise Exception('tried generating a random position too many times, giving up!')
-            already_used_locations.append(location)
+parser = argparse.ArgumentParser(description='Generate machine learning datasets using the Age of Empires 2 map editor running under steam.')
+parser.add_argument('command', choices=FUNCTION_MAP.keys())
+parser.add_argument('-n', type=int, nargs=1, default=[5], help='Number of images to generate in the dataset.')
+parser.add_argument('-v', '--visible', action='store_true', default=False, help='Start in a visible window, otherwise it runs in a virtual frame buffer.')
 
-            place_unit(unit, location)
-            if unit not in labels:
-                labels.append(unit)
-        except:
-            print("Skipping...")
-            pass
+args = parser.parse_args()
 
-    with open(csv_filename, 'a') as csv_file:
-        csv_file.write(str(i) + ', ' + " ".join(labels) + "\n")
+VISIBLE = args.visible
 
-    # Move mouse out of the way of the screenshot
-    pyautogui.moveRel(xOffset=200)
-    take_screenshot(i)
-
-    print('labels is: ' + " ".join(labels))
-    print('already_used_locations is: ' + str(already_used_locations))
-    print('''
-        
-    ''')
-
-print('''
-
-
-Ran until the end!
-
-
-''')
+argument_function = FUNCTION_MAP[args.command]
+argument_function(numberOfImages=args.n[0])

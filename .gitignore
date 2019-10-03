@@ -1,5 +1,5 @@
 screenshots/
-result/
+results/
 *.tgz
 venv/
 .vscode/
