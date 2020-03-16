@@ -1,5 +1,5 @@
 absl-py==0.7.1
-ansible==2.8.5
+ansible==2.8.8
 ansible-lint==4.1.0
 anyconfig==0.9.7
 anytree==2.6.0
