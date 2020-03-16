@@ -142,7 +142,7 @@ python-xlib==0.25
 pytoml==0.1.21
 pytz==2019.1
 pyudev==0.21.0.dev20190524
-PyYAML==3.13
+PyYAML==5.1
 pyzmq==18.0.2
 qutebrowser==1.8.0
 requests==2.22.0
