@@ -1,6 +1,10 @@
 screenshots/
 results/
+build/
+dist/
 *.tgz
 venv/
+.vim/
 .vscode/
+*.egg-info
 __pycache__/

@@ -2,30 +2,16 @@
 import time
 import random
 import pyautogui
+from pynput.mouse import Listener
 import os
 import Xlib
 import argparse
 
-from aoe2_units import units_dict, terrain_dict
+from aoe2_image_gen.generator.aoe2_units import units_dict, terrain_dict
 
 from easyprocess import EasyProcess
 from pyvirtualdisplay import Display
 
-VISIBLE = False
-GAME_ID = None
-DEFINITIVE_EDITION = True
-IMAGE_PATH = "images"
-
-res_x = 1024
-res_y = 768
-
-
-def run_map_editor():
-    pass
-
-
-def run_version():
-    raise NotImplementedError()
 
 
 def steam_login():
@@ -137,14 +123,36 @@ def generate_random_point():
 
 
 def generate_villager_dataset(numberOfImages):
+    global VISIBLE
     print(numberOfImages)
     if VISIBLE:
         print("Visible!")
     raise NotImplementedError()
 
 
-def generate_multi_label_dataset(numberOfImages, csv_filename="results/labels.csv"):
+def show_map_editor(numberOfImages):
+    global VISIBLE
     with Display(visible=1 if VISIBLE else 0, size=(res_x, res_y)) as disp:
+        pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ["DISPLAY"])
+        with EasyProcess(f'bash -c "steam steam://rungameid/{GAME_ID}"'):
+
+            wait_for_image(f"{IMAGE_PATH}/main-menu/aoe2-main-menu.png")
+
+            open_map_editor()
+
+            def on_click(x, y, button, pressed):
+                print('{0} {1} at {2}'.format(
+                    'Pressed' if pressed else 'Released',
+                    button,
+                    (x, y)))
+
+            with Listener(on_click=on_click) as listener:
+                listener.join()
+
+
+
+def generate_multi_label_dataset(numberOfImages, csv_filename="results/labels.csv"):
+    with Display(visible=1 if VISIBLE else 0, size=(res_x, res_y), backend='xephyr') as disp:
         pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ["DISPLAY"])
         with EasyProcess(f'bash -c "steam steam://rungameid/{GAME_ID}"'):
 
@@ -199,49 +207,47 @@ def generate_multi_label_dataset(numberOfImages, csv_filename="results/labels.cs
                 take_screenshot(i)
 
 
-FUNCTION_MAP = {
-    "version": run_version,
-    "map_editor": run_map_editor,
-    "villagers": generate_villager_dataset,
-    "multi_label": generate_multi_label_dataset,
-}
+def main():
+    GAME_ID = None
+    IMAGE_PATH = "images"
 
-parser = argparse.ArgumentParser(
-    description="Generate machine learning datasets using the Age of Empires 2 map editor running under steam."
-)
-parser.add_argument("command", choices=FUNCTION_MAP.keys())
-parser.add_argument(
-    "-n",
-    type=int,
-    nargs=1,
-    default=[5],
-    help="Number of images to generate in the dataset.",
-)
-parser.add_argument(
-    "-v",
-    "--visible",
-    action="store_true",
-    default=False,
-    help="Start in a visible window, otherwise it runs in a virtual frame buffer.",
-)
-parser.add_argument(
-    "--definitive_edition",
-    action="store_true",
-    default=True,
-    help="Run Definitive Edition. Setting this to False starts AoE2 HD"
-)
+    res_x = 1024
+    res_y = 768
 
-args = parser.parse_args()
+    FUNCTION_MAP = {
+        "map-editor": show_map_editor,
+        "villagers": generate_villager_dataset,
+        "multi_label": generate_multi_label_dataset,
+    }
 
-VISIBLE = args.visible
-DEFINITIVE_EDITION = args.definitive_edition
-if DEFINITIVE_EDITION:
-    GAME_ID = '813780'
-    IMAGE_PATH += '/de'
-else:
+    parser = argparse.ArgumentParser(
+        description="Generate machine learning datasets using the Age of Empires 2 map editor running under steam."
+    )
+    parser.add_argument("command", choices=FUNCTION_MAP.keys())
+    parser.add_argument(
+        "-n",
+        type=int,
+        nargs=1,
+        default=[5],
+        help="Number of images to generate in the dataset.",
+    )
+    parser.add_argument(
+        "-v",
+        "--visible",
+        action="store_true",
+        default=False,
+        help="Start in a visible window, otherwise it runs in a virtual frame buffer.",
+    )
+
+    args = parser.parse_args()
+
+    global VISIBLE
+    VISIBLE = args.visible
     GAME_ID = '221380'
     IMAGE_PATH += '/hd'
 
+    argument_function = FUNCTION_MAP[args.command]
+    argument_function(numberOfImages=args.n[0])
 
-argument_function = FUNCTION_MAP[args.command]
-argument_function(numberOfImages=args.n[0])
+if __name__ == "__main__":
+    main()
