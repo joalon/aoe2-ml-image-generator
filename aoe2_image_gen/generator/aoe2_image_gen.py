@@ -83,7 +83,7 @@ def wait_for_image(image, timeout=30):
         time.sleep(wait_time)
         seconds_waited += wait_time
         if seconds_waited > timeout:
-            raise TimeoutError("wait_for_image timeout expired")
+            raise TimeoutError(f"wait_for_image timeout expired while waiting for {image}")
     time.sleep(0.01)
 
 
@@ -141,7 +141,7 @@ def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labe
             if not os.path.exists("./results/train"):
                 os.mkdir("./results/train")
 
-            wait_for_image(f"images/hd/main-menu/aoe2-main-menu2.png")
+            wait_for_image(f"images/hd/main-menu/aoe2-main-menu.png")
 
             open_map_editor()
 
@@ -175,6 +175,7 @@ def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labe
                         if unit not in labels:
                             labels.append(unit)
                     except:
+                        # Maybe try handling it!?
                         pass
 
                 with open(csv_filepath, "a") as csv_file:
