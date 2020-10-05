@@ -14,8 +14,8 @@ pip3 install -r requirements.txt
 python3 -m aoe2_image_gen multi_label -n 5 --visible
 ```
 
-The result should end up in `results/` with either a labels.csv and a `train/` sub dir or several directories under `results/train/`.
+The PNG files will end up in `results/train/` with an optional `labels.csv` under `results/`.
 
 ## TODO:
 * The villager/no-villager generator
-* Building generator for images segmentation
+* Building generator for image segmentation

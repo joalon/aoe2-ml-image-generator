@@ -16,10 +16,10 @@ from pyvirtualdisplay import Display
 def steam_login():
     steam_password = os.environ["STEAM_PASSWORD"]
 
-    wait_for_image(f"images/hd/steam/steam-login-screen.png")
+    wait_for_image("images/hd/steam/steam-login-screen.png")
 
     steam_password_box_center = pyautogui.locateCenterOnScreen(
-        f"images/hd/steam/steam-password-box.png"
+        "images/hd/steam/steam-password-box.png"
     )
     pyautogui.click(steam_password_box_center)
     pyautogui.typewrite(steam_password + "\n")
@@ -27,21 +27,21 @@ def steam_login():
 
 def open_map_editor():
     map_editor_location_center = pyautogui.locateCenterOnScreen(
-        f"images/hd/main-menu/aoe2-map-editor-button.png"
+        "images/hd/main-menu/aoe2-map-editor-button.png"
     )
     pyautogui.click(map_editor_location_center)
 
     create_scenario_button_center = pyautogui.locateCenterOnScreen(
-        f"images/hd/main-menu/aoe2-create-scenario-button.png"
+        "images/hd/main-menu/aoe2-create-scenario-button.png"
     )
     pyautogui.click(create_scenario_button_center)
 
     create_button_center = pyautogui.locateCenterOnScreen(
-        f"images/hd/main-menu/aoe2-create-button.png"
+        "images/hd/main-menu/aoe2-create-button.png"
     )
     pyautogui.click(create_button_center)
 
-    wait_for_image(f"images/hd/map-editor/aoe2-map-editor-main-starting-view.png")
+    wait_for_image("images/hd/map-editor/aoe2-map-editor-main-starting-view.png")
 
 
 def generate_random_map():
@@ -54,7 +54,7 @@ def generate_random_map():
     pyautogui.click(x=25, y=18)
 
     default_terrain_dropdown = pyautogui.locateCenterOnScreen(
-        f"images/hd/map-editor/aoe2-map-editor-default-terrain-text.png"
+        "images/hd/map-editor/aoe2-map-editor-default-terrain-text.png"
     )
     default_terrain_dropdown_clickable = pyautogui.Point(
         default_terrain_dropdown.x + 195, default_terrain_dropdown.y + 20
@@ -65,14 +65,14 @@ def generate_random_map():
     pyautogui.typewrite(list(terrain_dict[terrain_index].values())[0], interval=0.2)
 
     generate_map_button_center = pyautogui.locateCenterOnScreen(
-        f"images/hd/map-editor/aoe2-generate-map-button.png"
+        "images/hd/map-editor/aoe2-generate-map-button.png"
     )
     pyautogui.click(generate_map_button_center)
 
 
-def take_screenshot(n):
+def take_screenshot(name, region):
     pyautogui.screenshot(
-        "results/train/" + str(n) + ".png", region=(350, 272, 224, 224)
+        "results/train/" + str(name) + ".png", region=region
     )
 
 
@@ -88,18 +88,15 @@ def wait_for_image(image, timeout=30):
 
 
 def open_unit_editor():
-    try:
-        units_button_center = pyautogui.locateCenterOnScreen(
-            f"images/hd/map-editor/aoe2-map-editor-units-button.png"
-        )
-        pyautogui.click(units_button_center)
-    except:
-        pass
+    units_button_center = pyautogui.locateCenterOnScreen(
+        "images/hd/map-editor/aoe2-map-editor-units-button.png"
+    )
+    pyautogui.click(units_button_center)
 
 
 def place_unit(unit, location):
-    pyautogui.typewrite(units_dict[unit]["place_command"], interval=0.15)
-    pyautogui.moveTo(location.x, location.y, 0.5, pyautogui.easeInQuad)
+    pyautogui.typewrite(unit["place_command"], interval=0.15)
+    pyautogui.moveTo(location.x, location.y, 0.2, pyautogui.easeInQuad)
     pyautogui.click()
 
 def point_is_near_other_locations(location, list_of_locations):
@@ -115,20 +112,37 @@ def point_is_near_other_locations(location, list_of_locations):
     return False
 
 
-def generate_random_point():
+def generate_random_point() -> pyautogui.Point:
     random_x = random.uniform(12, 140) + 400
     random_y = random.uniform(60, 200) + 272
     return pyautogui.Point(random_x, random_y)
 
 
 def generate_villager_dataset(numberOfImages, csv_filepath, visible, resolution):
-    raise NotImplementedError()
+    with Display(visible=1 if visible else 0, size=resolution, backend='xephyr') as disp:
+        pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ["DISPLAY"])
+        with EasyProcess('bash -c "steam steam://rungameid/221380"'):
+
+            if not os.path.exists(csv_filepath):
+                os.makedirs(csv_parentdir)
+
+            wait_for_image("images/hd/main-menu/aoe2-main-menu.png")
+
+            open_map_editor()
+
+            for i in range(0, numberOfImages):
+
+                unit = random.choice([unit_dict['male_villager'], unit_dict['female_villager']])
+
+                place_unit(unit, )
+                print(i)
+
 
 
 def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labels.csv", resolution=(1024,768), visible=False):
     with Display(visible=1 if visible else 0, size=resolution, backend='xephyr') as disp:
         pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ["DISPLAY"])
-        with EasyProcess(f'bash -c "steam steam://rungameid/221380"'):
+        with EasyProcess('bash -c "steam steam://rungameid/221380"'):
 
             csv_parentdir = "/".join(csv_filepath.split("/")[0:-1])
             if not os.path.exists(csv_parentdir):
@@ -138,10 +152,7 @@ def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labe
                 with open(csv_filepath, "w+") as f:
                     f.write("image_name, tags\n")
 
-            if not os.path.exists("./results/train"):
-                os.mkdir("./results/train")
-
-            wait_for_image(f"images/hd/main-menu/aoe2-main-menu.png")
+            wait_for_image("images/hd/main-menu/aoe2-main-menu.png")
 
             open_map_editor()
 
@@ -155,8 +166,7 @@ def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labe
 
                 for j in range(number_of_units):
                     try:
-                        random_unit_int = round(random.uniform(0, len(units_dict)) - 1)
-                        unit = list(units_dict.keys())[random_unit_int]
+                        unit = random.choice(list(units_dict.items()))[1]
 
                         location_tries = 0
                         location = generate_random_point()
@@ -181,6 +191,6 @@ def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labe
                 with open(csv_filepath, "a") as csv_file:
                     csv_file.write(str(i) + ", " + " ".join(labels) + "\n")
 
-                # Move mouse out of the way of the screenshot
+                # Move mouse out of the way of the screenshot. Without tweening it would leave unit artifacts on screen
                 pyautogui.moveTo(900, 700, 0.5, pyautogui.easeInQuad)
-                take_screenshot(i)
+                take_screenshot(name=i, region=(350, 272, 224, 224))
