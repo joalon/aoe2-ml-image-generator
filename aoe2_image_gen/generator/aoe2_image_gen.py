@@ -2,10 +2,8 @@
 import time
 import random
 import pyautogui
-from pynput.mouse import Listener
 import os
 import Xlib
-import argparse
 
 from aoe2_image_gen.generator.aoe2_units import units_dict, terrain_dict
 
@@ -45,12 +43,6 @@ def open_map_editor():
 
 
 def generate_random_map():
-    # try:
-    #    map_button_center = pyautogui.locateCenterOnScreen('images/map-editor/aoe2-map-editor-map-button-unclicked.png')
-    #    pyautogui.click(map_button_center)
-    # except:
-    #    print("Couldn't find the map editor button")
-
     pyautogui.click(x=25, y=18)
 
     default_terrain_dropdown = pyautogui.locateCenterOnScreen(
@@ -132,11 +124,19 @@ def generate_villager_dataset(numberOfImages, csv_filepath, visible, resolution)
 
             for i in range(0, numberOfImages):
 
-                unit = random.choice([unit_dict['male_villager'], unit_dict['female_villager']])
+                unit = random.choice([unit_dict['male_villager'], unit_dict['female_villager'], None])
 
-                place_unit(unit, )
-                print(i)
+                filename = ""
+                if unit is not None:
+                    point = generate_random_point()
+                    place_unit(unit, point)
+                    filename = "villager_" + i
+                else:
+                    filename = "no-villager_" + i
 
+                # Move mouse out of the way of the screenshot. Without tweening it would leave unit artifacts on screen
+                pyautogui.moveTo(900, 700, 0.5, pyautogui.easeInQuad)
+                take_screenshot(name=filename, region=(350, 272, 224, 224))
 
 
 def generate_multi_label_dataset(numberOfImages: int, csv_filepath="results/labels.csv", resolution=(1024,768), visible=False):
